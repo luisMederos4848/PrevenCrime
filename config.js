@@ -1,5 +1,5 @@
 const PAGE_URL = process.env.NODE_ENV === 'production'
-? 'https://prevencrime-prod.onrender.com'
+? 'https://prevencrime.onrender.com'
 : 'http://localhost:3005'
 
 const MONGO_URI = process.env.NODE_ENV === 'production'
