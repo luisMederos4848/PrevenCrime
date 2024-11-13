@@ -15,7 +15,7 @@ async function fetchAllReports() {
         reportsContainer.innerHTML = '';
 
         // Procesar y mostrar los informes recibidos
-        for (const report of reports) {
+        reports.forEach(report => {
             // Obtener el email del usuario haciendo una segunda solicitud a la API de usuarios
             const userResponse = await axios.get(`/api/users/${report.user}`, config);
             const userEmail = userResponse.data.email;
