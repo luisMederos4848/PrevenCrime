@@ -1,7 +1,26 @@
+// Función para obtener el nombre del usuario por su ID
+async function fetchUserName(userId) {
+    try {
+        const token = Cookies.get('adminToken');
+        const config = {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        };
+
+        // Realiza la solicitud para obtener los datos del usuario
+        const response = await axios.get(`/api/users/${userId}`, config);
+        return response.data.name; // Asume que el nombre está en response.data.name
+    } catch (error) {
+        console.error(`Error al obtener el usuario con ID ${userId}:`, error);
+        return 'Usuario desconocido'; // Valor por defecto en caso de error
+    }
+}
+
 // Función para obtener todos los informes y mostrarlos en el contenedor
 async function fetchAllReports() {
     try {
-        const token = Cookies.get('adminToken'); // Asegúrate de que el token se llame 'adminToken'
+        const token = Cookies.get('adminToken');
         const config = {
             headers: {
                 Authorization: `Bearer ${token}`
@@ -10,19 +29,15 @@ async function fetchAllReports() {
         
         // Realiza la solicitud a la API
         const response = await axios.get('/api/reports/admin', config);
-
-        // No necesitas verificar response.ok, ya que axios lanza un error en caso de fallos
-
-        const reports = response.data; // Aquí ya tienes los datos en formato JSON
+        const reports = response.data;
 
         // Limpiar el contenedor de reportes
         const reportsContainer = document.getElementById('reports-container2');
-        reportsContainer.innerHTML = ''; // Limpiar contenido anterior
+        reportsContainer.innerHTML = '';
 
         // Procesar y mostrar los informes recibidos
-        reports.forEach(report => {
+        for (const report of reports) {
             const reportInfo = document.createElement('div');
-
             reportInfo.classList.add(
                 'bg-neutral-200',
                 'p-4',
@@ -34,8 +49,11 @@ async function fetchAllReports() {
                 'items-center'
             );
 
+            // Obtener el nombre del usuario por su ID
+            const userName = await fetchUserName(report.user.$oid); 
+
             // Convertir la fecha a un formato legible
-            const reportDate = new Date(report.date).toLocaleDateString('es-PE'); // Usar 'es-PE' para formato Perú
+            const reportDate = new Date(report.date).toLocaleDateString('es-PE');
 
             reportInfo.innerHTML = `
                 <p class="mb-2">Fecha: ${reportDate}</p>
@@ -44,10 +62,11 @@ async function fetchAllReports() {
                 <p>Distrito: ${report.district}</p>
                 <p>¿Uso de arma?: ${report.weaponUsed ? 'Sí' : 'No'}</p>
                 <p>¿Uso de moto?: ${report.motorcycleUsed ? 'Sí' : 'No'}</p>
+                <p>Usuario: ${userName}</p> <!-- Aquí mostramos el nombre del usuario -->
             `;
 
             reportsContainer.appendChild(reportInfo);
-        });
+        }
     } catch (error) {
         console.error('Error al obtener los informes:', error);
         const notification = document.getElementById('notification');
