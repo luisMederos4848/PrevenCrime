@@ -1,27 +1,36 @@
-// Función para obtener todos los informes y mostrarlos en el contenedor
+// Función para obtener todos los informes y mostrar en el contenedor
 async function fetchAllReports() {
     try {
-        const token = Cookies.get('adminToken');
+        const token = Cookies.get('adminToken'); // Asegúrate de que el token se llame 'adminToken'
         const config = {
-            headers: { Authorization: `Bearer ${token}` }
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
         };
-        
-        // Realiza la solicitud a la API para obtener todos los reportes
-        const response = await axios.get('/api/reports/admin', config);
-        const reports = response.data;
-        
+
+        // Realiza las solicitudes a la API para obtener los reportes y los usuarios
+        const [reportsResponse, usersResponse] = await Promise.all([
+            axios.get('/api/reports/admin', config),
+            axios.get('/api/users', config)
+        ]);
+
+        const reports = reportsResponse.data;
+        const users = usersResponse.data;
+
+        // Crear un mapa de usuarios por ID para acceder rápidamente al email
+        const usersMap = {};
+        users.forEach(user => {
+            usersMap[user._id] = user.email; // Mapeamos el ID del usuario a su email
+        });
+
         // Limpiar el contenedor de reportes
         const reportsContainer = document.getElementById('reports-container2');
-        reportsContainer.innerHTML = '';
+        reportsContainer.innerHTML = ''; // Limpiar contenido anterior
 
         // Procesar y mostrar los informes recibidos
         reports.forEach(report => {
-            // Obtener el email del usuario haciendo una segunda solicitud a la API de usuarios
-            const userResponse = await axios.get(`/api/users/${report.user}`, config);
-            const userEmail = userResponse.data.email;
-
-            // Crear el contenedor para la información del reporte
             const reportInfo = document.createElement('div');
+
             reportInfo.classList.add(
                 'bg-neutral-200',
                 'p-4',
@@ -34,7 +43,10 @@ async function fetchAllReports() {
             );
 
             // Convertir la fecha a un formato legible
-            const reportDate = new Date(report.date).toLocaleDateString('es-PE');
+            const reportDate = new Date(report.date).toLocaleDateString('es-PE'); // Usar 'es-PE' para formato Perú
+            
+            // Obtener el email del usuario desde el mapa de usuarios
+            const userEmail = usersMap[report.user] || 'Email no disponible';
 
             reportInfo.innerHTML = `
                 <p class="mb-2">Fecha: ${reportDate}</p>
@@ -43,11 +55,11 @@ async function fetchAllReports() {
                 <p>Distrito: ${report.district}</p>
                 <p>¿Uso de arma?: ${report.weaponUsed ? 'Sí' : 'No'}</p>
                 <p>¿Uso de moto?: ${report.motorcycleUsed ? 'Sí' : 'No'}</p>
-                <p>Email del usuario: ${userEmail}</p> <!-- Mostrar el email del usuario -->
+                <p>Email del usuario: ${userEmail}</p>
             `;
 
             reportsContainer.appendChild(reportInfo);
-        }
+        });
     } catch (error) {
         console.error('Error al obtener los informes:', error);
         const notification = document.getElementById('notification');
@@ -67,3 +79,4 @@ async function fetchAllReports() {
 document.addEventListener('DOMContentLoaded', () => {
     fetchAllReports();
 });
+
